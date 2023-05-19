@@ -52,3 +52,10 @@ vim.opt.fillchars = {
 
 vim.cmd([[highlight clear LineNr]])
 vim.cmd([[highlight clear SignColumn]])
+
+
+-- Netrw Settings
+vim.g.netrw_banner = 1 -- hide banner at top
+vim.g.netrw_liststyle = 3 -- tree style
+vim.g.netrw_browsesplit = 3 -- open file in new tab
+
