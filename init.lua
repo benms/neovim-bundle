@@ -11,7 +11,6 @@ require('plugins.telescope')
 require('plugins.nullls')
 require('plugins.gitsigns')
 require('plugins.lualine')
-require('plugins.toggleterm')
 require('plugins.buffline')
 require('plugins.harpoon')
 
