@@ -1,6 +1,4 @@
 vim.g.mapleader = "."
 
--- NeoTree
--- vim.keymap.set('n', '<leader>e', ':Neotree float focus<CR>')
+-- netrw
 vim.keymap.set('n', '<leader>e', ':e .<CR>')
-vim.keymap.set('n', '<leader>o', ':Neotree float git_status<CR>')

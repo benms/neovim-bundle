@@ -13,14 +13,6 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
 	{ 'phaazon/hop.nvim' },
-	{ "nvim-neo-tree/neo-tree.nvim",
-    branch = "v2.x",
-    dependencies = { 
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-      "MunifTanjim/nui.nvim",
-      "s1n7ax/nvim-window-picker"
-    } },
     { 'nvim-treesitter/nvim-treesitter' },
     { 'neovim/nvim-lspconfig' },
     { 'joshdick/onedark.vim' },

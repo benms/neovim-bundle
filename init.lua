@@ -2,7 +2,6 @@
 require('core')
 
 -- Plugins
--- require('plugins.neotree')
 require('plugins.treesitter')
 require('plugins.lsp')
 require('plugins.cmp')
