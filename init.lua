@@ -13,6 +13,7 @@ require('plugins.gitsigns')
 require('plugins.lualine')
 require('plugins.toggleterm')
 require('plugins.buffline')
+require('plugins.harpoon')
 
 ---
 print('Welcome')
