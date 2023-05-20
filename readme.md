@@ -1,3 +1,6 @@
+
+![image](https://github.com/benms/neovim-bundle/assets/557984/7f1ede4c-2812-4ab1-8194-46efa312e204)
+
 ## Requirements
 
 - [Nerd Fonts](https://www.nerdfonts.com/font-downloads) (Optional with manual intervention: See [Recipes/Customizing Icons](https://astronvim.com/Recipes/icons#disable-icons))
