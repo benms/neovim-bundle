@@ -12,6 +12,7 @@ require('plugins.gitsigns')
 require('plugins.lualine')
 require('plugins.buffline')
 require('plugins.harpoon')
+require('plugins.indentblanklines')
 
 ---
 print('Welcome')
