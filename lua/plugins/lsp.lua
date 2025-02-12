@@ -3,7 +3,6 @@ local capabilities = vim.lsp.protocol.make_client_capabilities()
 -- Sntup language servers.
 local lspconfig = require('lspconfig')
 lspconfig.pyright.setup {}
-lspconfig.tsserver.setup {}
 lspconfig.prismals.setup {}
 lspconfig.cssls.setup {
     capabilities = capabilities
