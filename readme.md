@@ -33,3 +33,119 @@ mv ~/.cache/nvim ~/.cache/nvim.bak
 Clone the repository
 
 `git clone --depth 1 https://github.com/benms/neovim-bundle ~/.config/nvim`
+
+## Plugins/Modules Used
+
+### Plugin Manager
+- [lazy.nvim](https://github.com/folke/lazy.nvim) - Modern plugin manager for Neovim
+
+### Core Plugins
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) - Syntax highlighting and code parsing
+- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) - Quickstart configurations for the Neovim LSP client
+- [mason.nvim](https://github.com/williamboman/mason.nvim) - Portable package manager for Neovim (LSP servers, DAP servers, linters, formatters)
+
+### Completion
+- [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) - Completion engine
+- [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp) - LSP source for nvim-cmp
+- [cmp-buffer](https://github.com/hrsh7th/cmp-buffer) - Buffer source for nvim-cmp
+- [cmp-path](https://github.com/hrsh7th/cmp-path) - Path source for nvim-cmp
+- [cmp-cmdline](https://github.com/hrsh7th/cmp-cmdline) - Command line source for nvim-cmp
+
+### Navigation & Search
+- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) - Fuzzy finder and picker
+- [hop.nvim](https://github.com/phaazon/hop.nvim) - Neovim motions on speed
+- [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim) - File explorer
+
+### Git Integration
+- [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) - Git decorations and hunks
+
+### UI Enhancements
+- [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) - Fast and easy statusline
+- [bufferline.nvim](https://github.com/akinsho/bufferline.nvim) - Snazzy buffer line
+- [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) - File icons
+- [onedark.vim](https://github.com/joshdick/onedark.vim) - OneDark color scheme
+
+### Utilities
+- [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim) - Terminal integration
+- [none-ls.nvim](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a language server (formatting, diagnostics)
+- [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) - Lua utility functions (dependency for many plugins)
+- [nui.nvim](https://github.com/MunifTanjim/nui.nvim) - UI component library (dependency for neo-tree)
+- [lsp-progress.nvim](https://github.com/linrongbin16/lsp-progress.nvim) - LSP progress indicator
+
+## Keyboard Shortcuts
+
+### General Navigation
+- `<leader>` - Space key (default leader)
+
+### File Navigation (Telescope)
+- `<leader>ff` - Find files
+- `<leader>fw` - Live grep (search in files)
+- `<leader>fb` - Browse buffers
+- `<leader>fh` - Help tags
+- `*` - Search for word under cursor
+- `<leader>ls` - List document symbols
+
+### Git Integration
+- `<leader>gb` - Git branches
+- `<leader>gc` - Git commits
+- `<leader>gs` - Git status
+- `<leader>gf` - Git files
+- `<leader>gg` - Open lazygit (if installed)
+
+### LSP (Language Server Protocol)
+- `gd` - Go to definition
+- `gr` - Go to references
+- `gD` - Go to declaration
+- `K` - Hover documentation
+- `gi` - Go to implementation
+- `<C-k>` - Signature help
+- `<leader>wa` - Add workspace folder
+- `<leader>wr` - Remove workspace folder
+- `<leader>wl` - List workspace folders
+- `<leader>lr` - Rename symbol
+- `<leader>la` - Code actions
+- `<leader>lf` - Format code
+- `[d` - Go to previous diagnostic
+- `]d` - Go to next diagnostic
+- `<leader>e` - Show diagnostic float
+- `<leader>q` - Show diagnostics list
+
+### Hop Navigation
+- `f` - Hop to character forward (current line)
+- `F` - Hop to character backward (current line)
+- `t` - Hop till character forward (current line)
+- `T` - Hop till character backward (current line)
+- `<leader>hw` - Hop to word
+- `<leader>hl` - Hop to line
+- `<leader>hp` - Hop to pattern
+- `<leader>ha` - Hop anywhere
+- `<leader>hc` - Hop to 2 characters
+
+### Autocompletion (nvim-cmp)
+- `<C-b>` - Scroll docs up
+- `<C-f>` - Scroll docs down
+- `<C-Space>` - Trigger completion
+- `<C-e>` - Abort completion
+- `<CR>` - Confirm selection
+- `<Tab>` - Next completion item
+- `<S-Tab>` - Previous completion item
+
+### Terminal (ToggleTerm)
+- `<C-\>` - Toggle terminal
+- `<leader>tl` - Open lazygit terminal
+- `<leader>tp` - Open Python REPL
+- `<leader>tn` - Open Node REPL
+- **In terminal mode:**
+  - `<Esc>` or `jk` - Exit terminal mode
+  - `<C-h/j/k/l>` - Navigate between windows
+  - `<C-w>` - Window commands
+
+### Buffer Management
+- Navigate between buffers using bufferline (mouse click or keyboard shortcuts can be configured)
+
+### Neo-tree File Explorer
+- Can be toggled and navigated (default keybindings apply when focused)
+
+### Custom Mappings
+- `jj` - Exit insert mode (mapped to `<Esc>`)
+- `:W` - Save file (alias for `:w`)
