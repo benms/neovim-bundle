@@ -9,16 +9,16 @@ lspconfig.cssls.setup {
 }
 lspconfig.golangci_lint_ls.setup {}
 lspconfig.rust_analyzer.setup {
-  settings = {
-    ['rust-analyzer'] = {
+    settings = {
+        ['rust-analyzer'] = {
             diagnostics = {
                 enable = true,
                 experimental = {
                     enable = true,
                 },
             },
+        },
     },
-  },
 }
 -- Global mappings.
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
@@ -35,7 +35,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         -- Enable completion triggered by <c-x><c-o>
         vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
-        local opts = {buffer = ev.buf}
+        local opts = { buffer = ev.buf }
         vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
         vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
@@ -49,9 +49,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
         -- end, opts)
         -- vim.keymap.set('n', '<Leader>D', vim.lsp.buf.type_definition, opts)
         vim.keymap.set('n', '<Leader>lr', vim.lsp.buf.rename, opts)
-        vim.keymap.set({'n', 'v'}, '<Leader>la', vim.lsp.buf.code_action, opts)
+        vim.keymap.set({ 'n', 'v' }, '<Leader>la', vim.lsp.buf.code_action, opts)
         -- vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
         vim.keymap.set('n', '<Leader>lf',
-                       function() vim.lsp.buf.format {async = true} end, opts)
+            function() vim.lsp.buf.format { async = true } end, opts)
     end
 })

@@ -12,6 +12,8 @@ require('plugins.gitsigns')
 require('plugins.lualine')
 require('plugins.toggleterm')
 require('plugins.buffline')
+require('plugins.neotree')
+require('plugins.hop')
 
 ---
 print('Welcome')
