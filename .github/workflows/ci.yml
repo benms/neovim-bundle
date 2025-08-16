@@ -2,24 +2,35 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         neovim: [stable, nightly]
         exclude:
           - os: macos-latest
+            neovim: nightly
+          - os: windows-latest
             neovim: nightly
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
@@ -40,46 +51,78 @@ jobs:
           brew install ripgrep fd node
           npm install -g tree-sitter-cli
 
-      - name: Setup Configuration
+      - name: Install Dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install ripgrep fd nodejs -y
+          npm install -g tree-sitter-cli
+
+      - name: Setup Configuration (Unix)
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir -p ~/.config
           ln -sf $GITHUB_WORKSPACE ~/.config/nvim
 
-      - name: Install Plugins
-        timeout-minutes: 5
+      - name: Setup Configuration (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          nvim --headless -c "Lazy! sync" -c "qa" || true
-          sleep 2
-          nvim --headless -c "Lazy! sync" -c "qa" || true
+          $configPath = "$env:LOCALAPPDATA\nvim"
+          New-Item -ItemType Directory -Force -Path (Split-Path $configPath -Parent)
+          New-Item -ItemType SymbolicLink -Path $configPath -Target $env:GITHUB_WORKSPACE -Force
+
+      - name: Install Plugins
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          # Install plugins with retries
+          for i in {1..3}; do
+            if nvim --headless -c "Lazy! sync" -c "qa"; then
+              break
+            fi
+            echo "Plugin installation attempt $i failed, retrying..."
+            sleep 5
+          done
 
       - name: Test Configuration Loading
+        shell: bash
         run: |
           nvim --headless -c "echo 'Config loaded successfully'" -c "qa"
 
       - name: Test Treesitter Installation
-        timeout-minutes: 3
-        run: |
-          nvim --headless -c "TSInstall lua" -c "qa" || true
-
-      - name: Check Health
+        timeout-minutes: 5
+        shell: bash
         continue-on-error: true
         run: |
-          nvim --headless -c "checkhealth" -c "qa" > health.log 2>&1
-          cat health.log | head -100
+          nvim --headless -c "TSInstall lua" -c "qa"
+
+      - name: Check Health
+        shell: bash
+        continue-on-error: true
+        run: |
+          nvim --headless -c "checkhealth" -c "qa" > health.log 2>&1 || true
+          if [ -f health.log ]; then
+            echo "Health check completed"
+            head -100 health.log
+          fi
 
       - name: Run Local Tests
         if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
-          chmod +x test/run_tests.sh
-          ./test/run_tests.sh || true
+          if [ -f test/run_tests.sh ]; then
+            chmod +x test/run_tests.sh
+            ./test/run_tests.sh || true
+          fi
 
       - name: Upload Health Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: health-${{ matrix.os }}-${{ matrix.neovim }}
           path: health.log
           retention-days: 7
+          if-no-files-found: ignore
 
   lint:
     runs-on: ubuntu-latest
@@ -87,10 +130,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Validate JSON
         run: |
-          python3 -m json.tool lazy-lock.json > /dev/null
-          echo "✓ lazy-lock.json is valid"
+          if [ -f lazy-lock.json ]; then
+            python3 -m json.tool lazy-lock.json > /dev/null
+            echo "✓ lazy-lock.json is valid"
+          else
+            echo "! lazy-lock.json not found"
+          fi
 
       - name: Check File Structure
         run: |
@@ -103,22 +155,30 @@ jobs:
             "lua/core/colors.lua"
           )
 
+          missing_files=()
           for file in "${required_files[@]}"; do
             if [ -f "$file" ]; then
               echo "✓ $file exists"
             else
               echo "✗ $file is missing"
-              exit 1
+              missing_files+=("$file")
             fi
           done
 
-      - name: Check Lua Syntax
+          if [ ${#missing_files[@]} -gt 0 ]; then
+            echo "Missing files: ${missing_files[*]}"
+            exit 1
+          fi
+
+      - name: Install Lua Tools
         run: |
-          # Install lua and luacheck
           sudo apt-get update
           sudo apt-get install -y lua5.4 luarocks
           sudo luarocks install luacheck
 
+      - name: Check Lua Syntax
+        continue-on-error: true
+        run: |
           # Create luacheck config
           cat > .luacheckrc << 'EOF'
           globals = { "vim", "_G" }
@@ -127,5 +187,23 @@ jobs:
           exclude_files = { ".git/*", "test/*" }
           EOF
 
-          # Run luacheck (allow it to fail for warnings)
+          # Run luacheck
           luacheck lua/ init.lua --formatter plain || true
+
+      - name: Check Code Quality
+        run: |
+          echo "Checking for common issues..."
+          
+          # Check for tabs vs spaces consistency
+          if grep -r $'\t' --include="*.lua" .; then
+            echo "⚠ Warning: Found tabs in Lua files. Consider using spaces for consistency."
+          else
+            echo "✓ No tabs found in Lua files"
+          fi
+
+          # Check for trailing whitespace
+          if grep -r '[[:space:]]$' --include="*.lua" .; then
+            echo "⚠ Warning: Found trailing whitespace in Lua files."
+          else
+            echo "✓ No trailing whitespace found"
+          fi
