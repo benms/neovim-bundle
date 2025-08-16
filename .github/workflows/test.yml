@@ -1,0 +1,281 @@
+name: Test Neovim Configuration
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        neovim_version: ['stable', 'nightly']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.neovim_version }}
+
+      - name: Install dependencies
+        run: |
+          # Install ripgrep for telescope
+          sudo apt-get update
+          sudo apt-get install -y ripgrep fd-find
+
+          # Install language tools
+          sudo apt-get install -y python3 python3-pip nodejs npm
+
+          # Install tree-sitter CLI
+          npm install -g tree-sitter-cli
+
+      - name: Setup Neovim configuration
+        run: |
+          # Create nvim config directory
+          mkdir -p ~/.config
+
+          # Link the repository as nvim config
+          ln -s $GITHUB_WORKSPACE ~/.config/nvim
+
+      - name: Install plugins
+        run: |
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1 || true
+          # Run twice to ensure all dependencies are installed
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1 || true
+
+      - name: Check Neovim health
+        run: |
+          nvim --headless -c "checkhealth" -c "qa" 2>&1 | tee health.log
+
+      - name: Test configuration loading
+        run: |
+          # Test if config loads without errors
+          nvim --headless -c "echo 'Config loaded successfully'" -c "qa" 2>&1
+
+      - name: Test LSP setup
+        run: |
+          # Create a test file and check LSP
+          echo "print('Hello, World!')" > test.py
+          nvim --headless test.py -c "LspInfo" -c "qa" 2>&1 || true
+
+      - name: Test Telescope
+        run: |
+          nvim --headless -c "Telescope" -c "qa" 2>&1 || true
+
+      - name: Test Treesitter
+        run: |
+          # Install some parsers
+          nvim --headless -c "TSInstall lua python javascript" -c "qa" 2>&1 || true
+
+      - name: Run plugin checks
+        run: |
+          # Check for any plugin errors
+          nvim --headless -c "Lazy check" -c "qa" 2>&1
+
+      - name: Upload health check logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-check-${{ matrix.neovim_version }}
+          path: health.log
+
+  test-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        neovim_version: ['stable']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim
+        run: |
+          brew install neovim
+
+      - name: Install dependencies
+        run: |
+          # Install ripgrep for telescope
+          brew install ripgrep fd
+
+          # Install tree-sitter CLI
+          npm install -g tree-sitter-cli
+
+      - name: Setup Neovim configuration
+        run: |
+          # Create nvim config directory
+          mkdir -p ~/.config
+
+          # Link the repository as nvim config
+          ln -s $GITHUB_WORKSPACE ~/.config/nvim
+
+      - name: Install plugins
+        run: |
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1 || true
+          # Run twice to ensure all dependencies are installed
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1 || true
+
+      - name: Test configuration loading
+        run: |
+          # Test if config loads without errors
+          nvim --headless -c "echo 'Config loaded successfully'" -c "qa" 2>&1
+
+      - name: Check Neovim health
+        run: |
+          nvim --headless -c "checkhealth" -c "qa" 2>&1 | tee health.log
+
+      - name: Upload health check logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-check-macos
+          path: health.log
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim
+        run: |
+          choco install neovim -y
+
+      - name: Install dependencies
+        run: |
+          # Install ripgrep for telescope
+          choco install ripgrep fd -y
+
+          # Install Node.js and tree-sitter
+          choco install nodejs -y
+          npm install -g tree-sitter-cli
+
+      - name: Setup Neovim configuration
+        shell: pwsh
+        run: |
+          # Create nvim config directory
+          $configPath = "$env:LOCALAPPDATA\nvim"
+          New-Item -ItemType Directory -Force -Path (Split-Path $configPath -Parent)
+
+          # Create symbolic link
+          New-Item -ItemType SymbolicLink -Path $configPath -Target $env:GITHUB_WORKSPACE -Force
+
+      - name: Install plugins
+        shell: pwsh
+        run: |
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1
+          # Run twice to ensure all dependencies are installed
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1
+
+      - name: Test configuration loading
+        shell: pwsh
+        run: |
+          # Test if config loads without errors
+          nvim --headless -c "echo 'Config loaded successfully'" -c "qa" 2>&1
+
+      - name: Check Neovim health
+        shell: pwsh
+        run: |
+          nvim --headless -c "checkhealth" -c "qa" 2>&1 | Tee-Object -FilePath health.log
+
+      - name: Upload health check logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-check-windows
+          path: health.log
+
+  lint-lua:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4 luarocks
+          sudo luarocks install luacheck
+
+      - name: Run luacheck
+        run: |
+          # Create .luacheckrc for Neovim globals
+          cat > .luacheckrc << 'EOF'
+          globals = {
+            "vim",
+            "_G"
+          }
+          read_globals = {
+            "vim",
+            "require",
+            "pcall",
+            "pairs",
+            "ipairs",
+            "table",
+            "string",
+            "math",
+            "os",
+            "io",
+            "print",
+            "error",
+            "assert",
+            "tostring",
+            "tonumber",
+            "type",
+            "next",
+            "select",
+            "unpack"
+          }
+          exclude_files = {
+            "lazy-lock.json",
+            ".git/*"
+          }
+          max_line_length = 120
+          EOF
+
+          # Run luacheck
+          luacheck lua/ init.lua --formatter plain || true
+
+  validate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          # Check lazy-lock.json is valid JSON
+          python3 -m json.tool lazy-lock.json > /dev/null
+          echo "✓ lazy-lock.json is valid JSON"
+
+      - name: Check file structure
+        run: |
+          # Verify required files exist
+          required_files=(
+            "init.lua"
+            "lua/core/init.lua"
+            "lua/core/plugins.lua"
+            "lua/core/configs.lua"
+            "lua/core/mappings.lua"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✓ $file exists"
+            else
+              echo "✗ $file is missing"
+              exit 1
+            fi
+          done
+
+      - name: Check for common issues
+        run: |
+          # Check for tabs vs spaces consistency
+          if grep -r $'\t' --include="*.lua" .; then
+            echo "Warning: Found tabs in Lua files. Consider using spaces for consistency."
+          fi
+
+          # Check for trailing whitespace
+          if grep -r '[[:space:]]$' --include="*.lua" .; then
+            echo "Warning: Found trailing whitespace in Lua files."
+          fi

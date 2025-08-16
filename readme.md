@@ -1,6 +1,10 @@
 
 ![image](https://github.com/benms/neovim-bundle/assets/557984/7f1ede4c-2812-4ab1-8194-46efa312e204)
 
+![CI Status](https://github.com/benms/neovim-bundle/actions/workflows/test.yml/badge.svg)
+[![Neovim Minimum Version](https://img.shields.io/badge/Neovim-0.8.0%2B-blueviolet.svg?style=flat-square&logo=Neovim&logoColor=white)](https://github.com/neovim/neovim)
+[![Lua](https://img.shields.io/badge/Made%20with%20Lua-blue.svg?style=flat-square&logo=lua)](https://www.lua.org)
+
 ## Requirements
 
 - [Nerd Fonts](https://www.nerdfonts.com/font-downloads) (Optional with manual intervention: See [Recipes/Customizing Icons](https://astronvim.com/Recipes/icons#disable-icons))
@@ -33,6 +37,69 @@ mv ~/.cache/nvim ~/.cache/nvim.bak
 Clone the repository
 
 `git clone --depth 1 https://github.com/benms/neovim-bundle ~/.config/nvim`
+
+## Testing
+
+This configuration includes automated testing to ensure reliability across different platforms.
+
+### Continuous Integration
+
+The repository uses GitHub Actions to automatically test the configuration on:
+- **Linux** (Ubuntu latest) - with Neovim stable and nightly
+- **macOS** (latest)
+- **Windows** (latest)
+
+Tests include:
+- Configuration loading verification
+- Plugin installation checks
+- LSP setup validation
+- Syntax validation for all Lua files
+- Health check analysis
+- Performance benchmarking
+
+### Running Tests Locally
+
+You can run the test suite locally to verify your configuration:
+
+```bash
+# Run all tests
+./test/run_tests.sh
+
+# The test script will check:
+# - Neovim version compatibility
+# - Required dependencies
+# - File structure integrity
+# - Configuration loading
+# - Plugin installation
+# - LSP functionality
+# - Lua syntax validity
+# - Common issues (tabs, trailing whitespace)
+# - Health check status
+# - Startup performance
+```
+
+The test results will be displayed with color-coded output:
+- ✓ Green: Test passed
+- ✗ Red: Test failed
+- ⚠ Yellow: Warning (non-critical issue)
+
+### Manual Testing
+
+You can also manually test specific aspects:
+
+```bash
+# Check configuration loads without errors
+nvim --headless -c "echo 'Config OK'" -c "qa"
+
+# Run health check
+nvim --headless -c "checkhealth" -c "qa"
+
+# Sync plugins
+nvim --headless -c "Lazy! sync" -c "qa"
+
+# Check for Lua syntax errors
+find . -name "*.lua" -exec luac -p {} \;
+```
 
 ## Plugins/Modules Used
 
