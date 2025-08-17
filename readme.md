@@ -2,7 +2,6 @@
 ![image](https://github.com/benms/neovim-bundle/assets/557984/7f1ede4c-2812-4ab1-8194-46efa312e204)
 
 ![CI Status](https://github.com/benms/neovim-bundle/actions/workflows/ci.yml/badge.svg)
-![Extended Tests](https://github.com/benms/neovim-bundle/actions/workflows/test.yml/badge.svg)
 [![Neovim Minimum Version](https://img.shields.io/badge/Neovim-0.8.0%2B-blueviolet.svg?style=flat-square&logo=Neovim&logoColor=white)](https://github.com/neovim/neovim)
 [![Lua](https://img.shields.io/badge/Made%20with%20Lua-blue.svg?style=flat-square&logo=lua)](https://www.lua.org)
 

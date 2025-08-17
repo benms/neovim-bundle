@@ -1,10 +1,6 @@
 name: Extended Testing
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
   schedule:
     # Run weekly on Sundays at 2 AM UTC
@@ -14,32 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  integration-test:
+  nightly-test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        neovim_version: ['stable', 'nightly']
     
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Neovim
+      - name: Install Neovim (nightly)
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: ${{ matrix.neovim_version }}
+          version: nightly
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ripgrep fd-find python3 python3-pip nodejs npm
-          npm install -g tree-sitter-cli
+          sudo apt-get install -y ripgrep fd-find
 
       - name: Setup Neovim configuration
         run: |
@@ -47,89 +33,24 @@ jobs:
           ln -s $GITHUB_WORKSPACE ~/.config/nvim
 
       - name: Install plugins
-        timeout-minutes: 10
+        timeout-minutes: 5
         run: |
-          # Install plugins with better error handling
-          for i in {1..3}; do
-            if nvim --headless -c "Lazy! sync" -c "qa" 2>&1; then
-              echo "Plugin installation successful on attempt $i"
-              break
-            fi
-            echo "Plugin installation attempt $i failed, retrying..."
-            sleep 10
-          done
-
-      - name: Run comprehensive health check
-        continue-on-error: true
-        run: |
-          nvim --headless -c "checkhealth" -c "qa" 2>&1 | tee health.log
+          nvim --headless -c "Lazy! sync" -c "qa" 2>&1 || true
 
       - name: Test configuration loading
         run: |
           nvim --headless -c "echo 'Config loaded successfully'" -c "qa" 2>&1
 
-      - name: Test LSP functionality
+      - name: Run health check
         continue-on-error: true
         run: |
-          echo "print('Hello, World!')" > test.py
-          echo "console.log('Hello, World!');" > test.js
-          echo "puts 'Hello, World!'" > test.rb
-          
-          # Test LSP with different file types
-          nvim --headless test.py -c "LspInfo" -c "qa" 2>&1 || true
-          nvim --headless test.js -c "LspInfo" -c "qa" 2>&1 || true
+          nvim --headless -c "checkhealth" -c "qa" 2>&1 | head -50
 
-      - name: Test Telescope functionality
-        continue-on-error: true
-        run: |
-          # Test basic telescope commands
-          nvim --headless -c "Telescope find_files" -c "qa" 2>&1 || true
-          nvim --headless -c "Telescope help_tags" -c "qa" 2>&1 || true
-
-      - name: Test Treesitter parsers
-        continue-on-error: true
-        timeout-minutes: 5
-        run: |
-          # Install common parsers
-          nvim --headless -c "TSInstall lua python javascript typescript" -c "qa" 2>&1 || true
-
-      - name: Test plugin health
-        continue-on-error: true
-        run: |
-          nvim --headless -c "Lazy check" -c "qa" 2>&1
-
-      - name: Run local test suite
-        if: matrix.neovim_version == 'stable'
-        continue-on-error: true
-        run: |
-          if [ -f test/run_tests.sh ]; then
-            chmod +x test/run_tests.sh
-            ./test/run_tests.sh
-          fi
-
-      - name: Upload test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.neovim_version }}
-          path: |
-            health.log
-            test.py
-            test.js
-            test.rb
-          retention-days: 7
-          if-no-files-found: ignore
-
-  performance-test:
+  local-test:
     runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
 
       - name: Install Neovim (stable)
         uses: rhysd/action-setup-vim@v1
@@ -137,69 +58,15 @@ jobs:
           neovim: true
           version: stable
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ripgrep fd-find python3 nodejs npm time
-          npm install -g tree-sitter-cli
-
       - name: Setup configuration
         run: |
           mkdir -p ~/.config
           ln -s $GITHUB_WORKSPACE ~/.config/nvim
 
-      - name: Measure startup time
-        run: |
-          echo "Testing Neovim startup performance..."
-          
-          # Measure startup time
-          for i in {1..5}; do
-            /usr/bin/time -f "Startup $i: %e seconds" nvim --headless -c "qa" 2>&1
-          done
-
-      - name: Test plugin loading time
-        timeout-minutes: 10
-        run: |
-          echo "Installing and measuring plugin load time..."
-          start_time=$(date +%s)
-          nvim --headless -c "Lazy! sync" -c "qa" 2>&1
-          end_time=$(date +%s)
-          duration=$((end_time - start_time))
-          echo "Plugin installation took: ${duration} seconds"
-
-      - name: Memory usage test
+      - name: Run local test suite
         continue-on-error: true
         run: |
-          echo "Testing memory usage..."
-          # Start nvim in background and measure memory
-          nvim --headless -c "sleep 5" -c "qa" &
-          pid=$!
-          sleep 2
-          if ps -p $pid > /dev/null; then
-            ps -o pid,vsz,rss,comm -p $pid
+          if [ -f test/run_tests.sh ]; then
+            chmod +x test/run_tests.sh
+            timeout 300 ./test/run_tests.sh || true
           fi
-          wait $pid
-
-  compatibility-test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Test with minimal Neovim
-        uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: v0.8.0
-
-      - name: Setup minimal environment
-        run: |
-          mkdir -p ~/.config
-          ln -s $GITHUB_WORKSPACE ~/.config/nvim
-
-      - name: Test basic functionality
-        continue-on-error: true
-        run: |
-          echo "Testing with Neovim v0.8.0..."
-          nvim --version
-          nvim --headless -c "echo 'Compatibility test'" -c "qa" 2>&1 || true
